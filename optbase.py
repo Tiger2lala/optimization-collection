@@ -38,3 +38,30 @@ class OptimizerBase:
         ax.plot(self._cost_trace)
         fig.show()
         return fig, ax
+    
+
+class OptimizerPopulationBased(OptimizerBase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._pop = None
+        self.n_pop = None
+        self.n_var = None
+        
+    
+    def initialize_population(self, population_size: int, 
+                              bounds: List[Tuple] = None) -> None:
+        # Generate initial population with uniform random distribution
+        if bounds is not None: self.bounds = bounds
+        self.n_pop = population_size
+        self.n_var = len(self.bounds)
+        lower = np.array([pair[0] for pair in self.bounds])
+        higher = np.array([pair[1] for pair in self.bounds])
+        self.x0 = np.random.uniform(lower, higher, (self.n_pop, self.n_var))
+
+
+    def evaluate_population(self, population) -> np.ndarray:
+        # evaluate the function values for the population
+        func_val = np.zeros(self.n_pop)
+        for i in range(self.n_pop):
+            func_val[i] = self.objective_function(population[i])
+        return func_val

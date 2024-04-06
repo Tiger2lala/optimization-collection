@@ -3,23 +3,17 @@
 
 import numpy as np
 from typing import List, Tuple
-from optbase import OptimizerBase
+from optbase import OptimizerPopulationBased
+from testfuns import EGG_HOLDER
 
 
-class PSO(OptimizerBase):
+class PSO(OptimizerPopulationBased):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    def initialize_population(self, population_size: int, 
-                              bounds: List[Tuple]) -> None:
-        # Generate initial population with uniform random distribution
-        self.n_pop = population_size
-        self.n_var = len(bounds)
-        if bounds is not None: self.bounds = bounds
-        lower = np.array([pair[0] for pair in self.bounds])
-        higher = np.array([pair[1] for pair in self.bounds])
-        self.x0 = np.random.uniform(lower, higher, (self.n_pop, self.n_var))
-
+        self.best_pos_p = None
+        self.best_val_p = None
+        self.best_pos_g = None
+        self.best_val_g = None
 
 
     def optimize(self, max_gen: int,
@@ -35,7 +29,7 @@ class PSO(OptimizerBase):
         self.evaluate_best()
 
         # initialize velocity
-        velocity = np.random.randn((self.n_pop, self.n_var)) * init_velocity_scale
+        velocity = np.random.randn(self.n_pop, self.n_var) * init_velocity_scale
 
         # iterations
         for igen in range(max_gen):
@@ -43,11 +37,16 @@ class PSO(OptimizerBase):
             r1 = np.random.rand(self.n_pop, self.n_var) # random scalings
             r2 = np.random.rand(self.n_pop, self.n_var)
             velocity = inertia * velocity + \
-                c1 * r1 * (self.best_pos_p - self.x0) + \
-                c2 * r2 * (self.best_pos_g - self.x0)
+                c1 * r1 * (self.best_pos_p - self._pop) + \
+                c2 * r2 * (self.best_pos_g - self._pop)
 
             # update position
-            self.x0 += velocity
+            self._pop += velocity
+
+            # clipping
+            lower = np.array([pair[0] for pair in self.bounds])
+            higher = np.array([pair[1] for pair in self.bounds])
+            self._pop = np.clip(self._pop, lower, higher)
 
             # update best positions
             self.evaluate_best()
@@ -76,11 +75,10 @@ class PSO(OptimizerBase):
                 self.best_pos_g = self.best_pos_p[self.best_val_p.argmin()]
 
 
-
-    
-    def evaluate_population(self, population) -> np.ndarray:
-        # evaluate the function values for the population
-        func_val = np.zeros(population.shape[0])
-        for i in range(population.shape[0]):
-            func_val[i] = self.objective_function(population[i])
-        return func_val
+if __name__ == '__main__':
+    # Run an example
+    de = PSO(objective_function=EGG_HOLDER['obj'],
+             bounds=EGG_HOLDER['bounds'])
+    de.initialize_population(30)
+    de.optimize(inertia=0.8, max_gen=100)
+    de.plot_trace()

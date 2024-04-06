@@ -1,12 +1,12 @@
 # basic implementation of a differential evolution algorithm
 # @tz2lala
 
-from optbase import OptimizerBase
+from optbase import OptimizerPopulationBased
 from typing import List, Tuple
 import numpy as np
 from testfuns import EGG_HOLDER
 
-class DifferentialEvolution(OptimizerBase):
+class DifferentialEvolution(OptimizerPopulationBased):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -41,13 +41,6 @@ class DifferentialEvolution(OptimizerBase):
         # Return the best individual found
         self._x_est = self._pop[func_val.argmin()]
 
-    def initialize_population(self, population_size: int,
-                              bounds: List[Tuple] = None) -> None:
-        # Generate initial population with uniform random distribution
-        if bounds is not None: self.bounds = bounds
-        lower = np.array([pair[0] for pair in self.bounds])
-        higher = np.array([pair[1] for pair in self.bounds])
-        self.x0 = np.random.uniform(lower, higher, (population_size, len(lower)))
 
     def evaluate_population(self, population) -> np.ndarray:
         # evaluate the function values for the population
